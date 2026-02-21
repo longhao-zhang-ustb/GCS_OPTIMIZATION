@@ -9,107 +9,107 @@ if __name__ == '__main__':
     
     seed = [42, 230, 4399, 9999, 55000]
     #############################################################################
-    seed = seed[4]  # 改1
-    # 评估对GCS编码项的预测结果
-    exp_class = r'6-4'  # 改2
-    file_path = file_path = r"model_pth\\exp_1\\03_cos_similarity_db\\" + exp_class + r"\\seed_" + str(seed) + r'\\' # 改3
-    df_test = pd.read_csv(r'data_base\\03_cos_similarity_db\\abnormal_assessment\\' + exp_class.replace('-', '_') + r'_test_filled.csv', index_col=0) # 改4
+    seed = seed[4]
+    # Evaluate the prediction results for GCS coding items
+    exp_class = r'6-4'
+    file_path = file_path = r"model_pth\\exp_1\\03_cos_similarity_db\\" + exp_class + r"\\seed_" + str(seed) + r'\\'
+    df_test = pd.read_csv(r'data_base\\03_cos_similarity_db\\abnormal_assessment\\' + exp_class.replace('-', '_') + r'_test_filled.csv', index_col=0)
     ##############################################################################
     select_columns = ['INP_NO', 'Age', 'SEX', 'heart_rate', 'breathing', 'Blood_oxygen_saturation', 
                       'Blood_pressure_high', 'Blood_pressure_low', 'Left_pupil_size', 'Right_pupil_size',
                       'consciousness', 'ChartTime']
     Columns = df_test.drop(columns=select_columns).columns
     Columns = Columns[:]
-    # 标记离散特征
+    # Mark discrete features
     categorical_cols = Columns[-5:]
     ##############################################################################
-    # 选择测试数据
+    # Select test data
     X_test = df_test[Columns]
     target_col = 'consciousness'
     y_test = df_test[target_col]
     test_data = pd.DataFrame(X_test, columns=Columns)
     test_data[target_col] = y_test.values
     ##############################################################################
-    # 保存到文件
+    # Save to file
     with open('classification_report.txt', 'a+') as f:
         f.write('-----------------' + str(datetime.now()) + '-----------------' + exp_class)
         f.write('\n')
-    #####################深度神经网络##########################
+    #####################DNNs##########################
     with open(file_path + r'\\DANet.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(test_data)['consciousness_prediction']
-        print('DANet模型实验结果：')
+        print('DANet experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('DANet模型实验结果：')
+            f.write('DANet experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
 
     with open(file_path + r'\\TabNet.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(test_data)['consciousness_prediction']
-        print('TabNet模型实验结果：')
+        print('TabNet experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('TabNet模型实验结果：')
+            f.write('TabNet experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
 
     with open(file_path + r'\\FTTransformer.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(test_data)['consciousness_prediction']
-        print('FTTransformer模型实验结果：')
+        print('FTTransformer experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('FTTransformer模型实验结果：')
+            f.write('FTTransformer experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
 
     with open(file_path + r'\\TabTransformer.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(test_data)['consciousness_prediction']
-        print('TabTransformer模型实验结果：')
+        print('TabTransformer experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('TabTransformer模型实验结果：')
+            f.write('TabTransformer experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
      
-    #####################机器学习技术##########################
+    #####################Machine Learning##########################
     with open(file_path + r'\\lgb.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(X_test)
-        print('LightGBM模型实验结果：')
+        print('LightGBM experimental results:')
         print(classification_report(y_test, y_pred, digits=4)) 
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('LightGBM模型实验结果：')
+            f.write('LightGBM experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
 
     with open(file_path + r'\\xgboost.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(X_test)
-        print('XGBoost模型实验结果：')
+        print('XGBoost experimental results:')
         print(classification_report(y_test, y_pred, digits=4)) 
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('XGBoost模型实验结果：')
+            f.write('XGBoost experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
             
     with open(file_path + r'\\rf_model.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(X_test)
-        print('RandomForest模型实验结果：')
+        print('RandomForest experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('RandomForest模型实验结果：')
+            f.write('RandomForest experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
 
@@ -119,29 +119,29 @@ if __name__ == '__main__':
             X_test_str[col] = X_test_str[col].astype(str)
         model = pickle.load(file)
         y_pred = model.predict(X_test_str)
-        print('CatBoost模型实验结果：')
+        print('CatBoost experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('CatBoost模型实验结果：')
+            f.write('CatBoost experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')
     
-    # 对离散特征先进行序数编码，在进行标准化处理
-    # 加载编码器
+    # Perform ordinal encoding on discrete features first, then proceed with normalization processing.
+    # Load Encoder
     ordinal_encoder = pickle.load(open(file_path + r'ordinal_encoder.pkl', 'rb'))
     X_test[categorical_cols] = ordinal_encoder.transform(X_test[categorical_cols])
-    # 加载标准化器
+    # Load Standardizer
     scaler = pickle.load(open(file_path + r'scaler.pkl', 'rb'))
     X_test = scaler.transform(X_test)
 
     with open(file_path + r'\\mlp.pkl', 'rb') as file:
         model = pickle.load(file)
         y_pred = model.predict(X_test)
-        print('MLP模型实验结果：')
+        print('MLP experimental results:')
         print(classification_report(y_test, y_pred, digits=4))
-        # 保存到文件
+        # Save to file
         with open('classification_report.txt', 'a+') as f:
-            f.write('MLP模型实验结果：')
+            f.write('MLP experimental results:')
             f.write(classification_report(y_test, y_pred, digits=4))
             f.write('\n')         
