@@ -110,7 +110,7 @@ if __name__ == '__main__':
     df_cleaned = df_cleaned[pd.to_numeric(df_cleaned['Right_pupil_size'], errors='coerce').notnull()]
     df_cleaned['Left_pupil_size'] = df_cleaned['Left_pupil_size'].astype(float)
     df_cleaned['Right_pupil_size'] = df_cleaned['Right_pupil_size'].astype(float)
-    # 去掉异常的生命体征测量值
+    # Remove abnormal vital sign measurements
     df_cleaned = df_cleaned[(df_cleaned['heart_rate'] >= 0) & \
                             (df_cleaned['heart_rate'] <= 350) & \
                             (df_cleaned['breathing'] >= 0) & \
@@ -125,12 +125,11 @@ if __name__ == '__main__':
                             (df_cleaned['Left_pupil_size'] <= 10) & \
                             (df_cleaned['Right_pupil_size'] >= 0) & \
                             (df_cleaned['Right_pupil_size'] <= 10)]
-    # 统计各个意识状态的数量
     consciousness_counts = df_cleaned['consciousness'].value_counts()
     print('Consciousness state counts:')
     for state, count in consciousness_counts.items():
         print(f'  State: {state}, Count: {count}')
-    # 保留值为浅昏迷，中昏迷，深昏迷的行
+    # Rows with values retained for light coma, moderate coma, and severe coma
     valid_states = ['清醒', '嗜睡', '昏睡', '浅昏迷', '中昏迷', '深昏迷']
     df_filtered = df_cleaned[df_cleaned['consciousness'].isin(valid_states)]
     print(f'After filtering valid states, shape: {df_filtered.shape}')
@@ -138,36 +137,33 @@ if __name__ == '__main__':
     print('Filtered consciousness state counts:')
     for state, count in consciousness_counts_filtered.items():
         print(f'  State: {state}, Count: {count}')
-    # 对consciousness列进行编码
-    # state_encoding = {'清醒': 0, '嗜睡':1, '昏睡': 1, '浅昏迷': 2, '中昏迷': 3, '深昏迷': 4}
-    state_encoding = {'清醒': 0, '嗜睡':1, '昏睡': 2, '浅昏迷': 3, '中昏迷': 4, '深昏迷': 5}
+    # Encode the consciousness column
+    state_encoding = {'清醒': 0, '嗜睡':1, '昏睡': 1, '浅昏迷': 2, '中昏迷': 3, '深昏迷': 4}
     df_filtered['consciousness'] = df_filtered['consciousness'].map(state_encoding)
-    # 打印编码后的各个意识状态的数量
     consciousness_counts_encoded = df_filtered['consciousness'].value_counts()
     print('Encoded consciousness state counts:')
     for state, count in consciousness_counts_encoded.items():
         print(f'  State: {state}, Count: {count}')
-    # 打印患者的数目
     # patient_num = df_filtered['INP_NO'].value_counts()
     print(f'Before filtering age >= 18, shape: {df_filtered.shape}')
-    # 级联患者基本信息表
+    # Cascade Patient Basic Information Form
     df_patient_info = pd.read_csv(r'zigong_data\dtBaseline.csv')
     df_filtered = pd.merge(df_filtered, df_patient_info[['INP_NO', 'Age', 'SEX']], on='INP_NO', how='left')
-    # 将年龄, 性别列调整到INP_NO列后面
+    # Move the Age and Gender columns after the INP_NO column.
     cols = df_filtered.columns.tolist()
     cols.remove('Age')
     cols.remove('SEX')
     cols.insert(cols.index('INP_NO') + 1, 'Age')
     cols.insert(cols.index('INP_NO') + 2, 'SEX')
     df_filtered = df_filtered[cols]
-    # 查找其中年龄不大于18的患者
+    # Identify patients whose age is no greater than 18.
     df_filtered = df_filtered[df_filtered['Age'] >= 18]
-    # 过滤所有字段都相同的记录
+    # Filter records where all fields are identical
     df_filtered = df_filtered.drop_duplicates()
-    # 打印过滤后的患者数目
+    # Print the number of filtered patients
     df_patient = df_filtered.drop_duplicates(subset='INP_NO', keep='first')
     print(f'After filtering patients age >= 18, shape: {df_patient.shape}')
-    # 统计各个意识状态的数量
+    # Count the number of each consciousness state
     consciousness_counts = df_filtered['consciousness'].value_counts()
     print('Consciousness state counts:')
     for state, count in consciousness_counts.items():
@@ -180,5 +176,5 @@ if __name__ == '__main__':
     State: 0, Count: 33331  ==>清醒
     State: 4, Count: 21327  ==>深昏迷
     """
-    # 保存最终处理的数据
+    # Save the final processed data
     df_filtered.to_csv('zigong_data/20251227_final_processed_data.csv', index=False)
