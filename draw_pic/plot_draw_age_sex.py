@@ -8,51 +8,50 @@ plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams['font.size'] = 12
 plt.rcParams['axes.unicode_minus'] = False
 
-# ---------------------- 1. 统一数据（保持所有子图数据一致） ----------------------
+# ---------------------- 1. Unify data (maintain consistency across all subgraph data) ----------------------
 dtBaseline = pd.read_csv(r'zigong_data\\dtBaseline.csv')
 dtProcessed = pd.read_csv(r'zigong_data\\20251227_final_processed_data.csv')
 dtProcessed = dtProcessed.drop_duplicates(subset='INP_NO', keep='first')
 
-# 查找男女患者的年龄及对应的意识水平
+# Identify the age of male and female patients and their corresponding levels of consciousness.
 male_age = dtProcessed[dtProcessed['SEX'] == 'Male']['Age'].values
 male_levels = dtProcessed[dtProcessed['SEX'] == 'Male']['consciousness'].values
 female_age = dtProcessed[dtProcessed['SEX'] == 'Female']['Age'].values
 female_levels = dtProcessed[dtProcessed['SEX'] == 'Female']['consciousness'].values
 
-# 打印患者的数目
-# print(f"男性患者数: {len(male_age)}")
-# print(f"女性患者数: {len(female_age)}")
+# Number of patients printed
+# print(f"Number of male patients: {len(male_age)}")
+# print(f"Number of female patients: {len(female_age)}")
 
-# 保存数据
 # dtProcessed[['INP_NO', 'Age', 'SEX', 'consciousness']].to_csv(r'zigong_data\\dtProcessed_age_sex_consciousness.csv', index=False)
 
-# 意识水平标签映射
+# Consciousness Level Label Mapping
 consciousness_levels = ["SO", "HS", "LC", "MC", "SC"]
 level_to_num = {level: i for i, level in enumerate(consciousness_levels)}
-# 将male_levels和female_levels根据consciousness_levels转换为字符串
+# Convert male_levels and female_levels to strings based on consciousness_levels
 male_levels = [consciousness_levels[int(level)] for level in male_levels]
 female_levels = [consciousness_levels[int(level)] for level in female_levels]
 
-# 转换意识水平为数值（关键：将文本标签转为数字以便添加抖动）
+# Convert consciousness levels to numerical values (Key: Convert text labels to numbers to add jitter)
 male_levels_num = np.array([level_to_num[level] for level in male_levels])
 female_levels_num = np.array([level_to_num[level] for level in female_levels])
 
-# 添加y轴抖动（使用正态分布随机扰动，0.15是抖动幅度可调整）
-抖动幅度 = 0.1  # 控制抖动大小，值越大分散越明显
-male_levels_jittered = male_levels_num + np.random.normal(0, 抖动幅度, size=len(male_levels_num))
-female_levels_jittered = female_levels_num + np.random.normal(0, 抖动幅度, size=len(female_levels_num))
+# Add Y-axis jitter (using a normal distribution random disturbance; 0.15 is the adjustable jitter amplitude)
+JA = 0.1  # Control the amount of jitter; the higher the value, the more pronounced the dispersion.
+male_levels_jittered = male_levels_num + np.random.normal(0, JA, size=len(male_levels_num))
+female_levels_jittered = female_levels_num + np.random.normal(0, JA, size=len(female_levels_num))
 
-# 合并数据用于边缘图
+# Merge data for edge map
 all_age = np.concatenate([male_age, female_age])
-all_levels = np.concatenate([male_levels_num, female_levels_num])  # 使用数值化的水平
+all_levels = np.concatenate([male_levels_num, female_levels_num])  # Using a digital level
 
-# 年龄分组配置
+# Age Group Configuration
 age_bins = np.arange(0, 140, 10)
 age_labels = [f'{i}-{i+10}' for i in age_bins[:-1]]
 male_counts, _ = np.histogram(male_age, bins=age_bins)
 female_counts, _ = np.histogram(female_age, bins=age_bins)
 
-# ---------------------- 2. 画布布局 ----------------------
+# ---------------------- 2. Canvas Layout ----------------------
 fig = plt.figure(figsize=(8, 8))
 gs = fig.add_gridspec(
     nrows=5, ncols=5,
@@ -61,21 +60,20 @@ gs = fig.add_gridspec(
     width_ratios=[0.1, 5, 0.05, 1, 0.1]
 )
 
-ax_age_gender = fig.add_subplot(gs[0, 1])          # 上方柱状图
-ax_scatter = fig.add_subplot(gs[2, 1])             # 中间散点图
-ax_hist_y = fig.add_subplot(gs[2, 3])              # 右侧直方图
+ax_age_gender = fig.add_subplot(gs[0, 1])          # Bar Chart Above
+ax_scatter = fig.add_subplot(gs[2, 1])             # Scatter Plot in the Middle
+ax_hist_y = fig.add_subplot(gs[2, 3])              # Right-side histogram
 
-# ---------------------- 3. 主散点图（使用抖动后的y值） ----------------------
+# ---------------------- 3. Primary Scatter Plot (Using Jittered Y Values) ----------------------
 ax_scatter.scatter(
-    male_age, male_levels_jittered,  # 男：使用抖动后的y值
+    male_age, male_levels_jittered,  # Male: Use the y-value after jittering
     color='blue', marker='o', label='Male', s=5, edgecolors='blue'
 )
 ax_scatter.scatter(
-    female_age, female_levels_jittered,  # 女：使用抖动后的y值
+    female_age, female_levels_jittered,  # Female: Use the y-value after jittering
     color='red', marker='s', label='Female', s=5, edgecolors='red', linestyle='--'
 )
 
-# 散点图其他设置保持不变
 ax_scatter.set_xticks(np.arange(0, 130, 10))
 ax_scatter.set_xticklabels(np.arange(0, 130, 10), fontsize=8)
 ax_scatter.set_yticks(range(len(consciousness_levels)))
@@ -85,7 +83,7 @@ ax_scatter.set_ylabel('Arousal Level', fontsize=8)
 ax_scatter.legend(fontsize=8, loc='upper right')
 ax_scatter.grid(axis='y', linestyle='--', alpha=0.7)
 
-# ---------------------- 4. 上方年龄分布柱状图（保持不变） ----------------------
+# ---------------------- 4. Age Distribution Bar Chart Above (Remain unchanged) ----------------------
 x = np.arange(len(age_labels))
 width = 0.3
 ax_age_gender.bar(x - width/2, male_counts, width, label='Male', color='blue', alpha=0.7, edgecolor='blue')
@@ -115,7 +113,7 @@ for i, (m, f) in enumerate(zip(male_counts, female_counts)):
     if f > 0:
         ax_age_gender.text(i + width/2, f + 40, str(f), ha='center', va='top', fontsize=8)
 
-# ---------------------- 5. 右侧意识水平分布直方图（保持不变） ----------------------
+# ---------------------- 5. Right-side consciousness level distribution histogram (remains unchanged) ----------------------
 all_y_counts = np.bincount(all_levels, minlength=len(consciousness_levels))
 all_y_density = all_y_counts / len(all_levels)
 y_bins = range(len(consciousness_levels))
