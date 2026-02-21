@@ -12,13 +12,12 @@ from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 
-# 设置全局字体为Times New Roman
 plt.rcParams['font.family'] = 'Times New Roman'
 plt.rcParams['font.size'] = 18
 
-# 自定义绿-白-红渐变（可调整颜色深浅）
-colors = ["#27AE60", "#FFFFFF", "#E74C3C"]  # 深绿→白→深红
-n_bins = 100  # 渐变平滑度
+# Custom Green-White-Red Gradient (Adjustable Color Intensity)
+colors = ["#27AE60", "#FFFFFF", "#E74C3C"]  # Dark green → White → Dark red
+n_bins = 100  # Gradient Smoothness
 cmap_green_white_red = LinearSegmentedColormap.from_list(
     "GreenWhiteRed", colors, N=n_bins
 )
@@ -94,7 +93,7 @@ def plot_awakening_radar(pred_labels, true_labels):
     # Set radar chart value range (automatically adapt to min/max values for aesthetic appearance)
     all_data = np.concatenate([pred_labels, true_labels])
     vmin, vmax = np.min(all_data), np.max(all_data)
-    # 扩大数值范围，为数值标注留出空间
+    # Expand the numerical range to allow space for value annotations.
     ax.set_ylim(vmin - 0.2*(vmax-vmin), vmax + 0.2*(vmax-vmin))
 
     # Draw grid lines
@@ -111,21 +110,20 @@ def plot_awakening_radar(pred_labels, true_labels):
     ax.plot(theta, pred_labels, color='#ff7f0e', linewidth=2, linestyle='--', label='Predicted Arousal Level')
     ax.fill(theta, pred_labels, color='#ff7f0e', alpha=0.25)
 
-    # ---------------------- 核心新增：添加数值标注 ----------------------
-    # 定义标注样式参数
+    # Define annotation style parameters
     fontsize = 12
-    true_color = '#1f77b4'  # 真实值颜色
-    pred_color = '#ff7f0e'  # 预测值颜色
-    offset = 0.05 * (vmax - vmin)  # 数值标注偏移量，避免与线条重叠
+    true_color = '#1f77b4'  # True Color
+    pred_color = '#ff7f0e'  # Predicted Value Color
+    offset = 0.05 * (vmax - vmin)  # Offset numerical annotations to avoid overlapping with lines.
 
-    # 为每个维度添加真实值标注
+    # Add ground truth labels for each dimension
     for angle, value in zip(theta, true_labels):
-        # 标注位置在真实值基础上轻微外移，避免遮挡
+        # The annotation position is slightly offset from the actual value to avoid obstruction.
         ax.text(angle, value - offset, f'{value:.2f}', 
                 ha='center', va='center', fontsize=fontsize, color=true_color,
                 fontweight='bold')
     
-    # 为每个维度添加预测值标注（偏移量更大，避免与真实值标注重叠）
+    # Add prediction labels for each dimension (with larger offsets to avoid overlapping with true value labels)
     for angle, value in zip(theta, pred_labels):
         ax.text(angle, value + 2*offset, f'{value:.2f}', 
                 ha='center', va='center', fontsize=fontsize, color=pred_color,
@@ -137,42 +135,40 @@ def plot_awakening_radar(pred_labels, true_labels):
     # Display the chart
     plt.show()
 
-# 2. 定义一个预测包装函数
+# 2. Define a prediction wrapper function
 def model_predict_function(X):
     """
-    一个包装函数，用于将 TabularModel 适配到 SHAP 的接口。
-    参数:
-    X (np.ndarray 或 pd.DataFrame): 特征数据。SHAP 会传递一个 NumPy 数组进来。
-    返回:
-    np.ndarray: 模型的预测概率或原始输出。
+    A wrapper function that adapts TabularModel to SHAP's interface.
+    Parameters:
+    X (np.ndarray or pd.DataFrame): Feature data. SHAP passes in a NumPy array.
+    Returns:
+    np.ndarray: The model's predicted probabilities or raw outputs.
     """
-    # SHAP 的 KernelExplainer 会传递 NumPy 数组，而 TabularModel 的 predict 方法需要 DataFrame
-    # 因此，我们需要先将 NumPy 数组转换回 Pandas DataFrame
+    # SHAP's KernelExplainer passes NumPy arrays, while TabularModel's predict method requires a DataFrame.
+    # Therefore, we first need to convert the NumPy array back into a Pandas DataFrame.
     if not isinstance(X, pd.DataFrame):
         X = pd.DataFrame(X, columns=X_test.columns)
     
-    # 使用 TabularModel 的 predict 方法进行预测
-    # predict 方法返回一个字典，包含了 'prediction' 和 'probabilities' 等键
-    # 深度学习模型
+    # # Use the predict method of TabularModel for prediction
+    # The predict method returns a dictionary containing keys such as ‘prediction’ and ‘probabilities’.
+    # Deep Learning Model
     prediction_result = model.predict(X)
-    # SHAP 需要模型的原始输出（logits）或概率。
-    # 对于分类任务，通常使用 'probabilities'
-    # 对于回归任务，使用 'prediction'
-    # 根据你的任务类型选择正确的键
-    # 以下这行代码针对前4个pytorch模型使用
+    # SHAP requires the model's raw outputs (logits) or probabilities.
+    # For classification tasks, ‘probabilities’ are typically used.
+    # For regression tasks, use ‘prediction’.
     return prediction_result["consciousness_prediction"]
 
 def shap_summary_top_features(shap_values, X, top_n=2, show=True, save=True):
     """
-    绘制前 top_n 个重要特征的 SHAP 汇总图，并按重要性排序。
+    Plot a summary SHAP map of the top_n most important features, sorted by importance.
     
-    参数:
-    - shap_values: SHAP 值数组，形状 (n_samples, n_features)
-    - X: 原始特征矩阵 (DataFrame 或 ndarray)
-    - top_n: 要显示的特征数量
-    - show: 是否直接显示图形
+    Parameters:
+    - shap_values: SHAP value array, shape (n_samples, n_features)
+    - X: Raw feature matrix (DataFrame or ndarray)
+    - top_n: Number of features to display
+    - show: Whether to display the graph directly
     """
-    # 如果是 DataFrame，提取特征名
+    # If it is a DataFrame, extract feature names.
     if isinstance(X, pd.DataFrame):
         feature_names = X.columns.tolist()
     else:
@@ -181,29 +177,28 @@ def shap_summary_top_features(shap_values, X, top_n=2, show=True, save=True):
     feature_names = ['Motor' if ele == 'motion' else ele for ele in feature_names]
     feature_names = ['Verbal' if ele == 'language' else ele for ele in feature_names]
     
-    # 计算每个特征的 SHAP 重要性（绝对值均值）
+    # Compute the SHAP importance (mean absolute value) for each feature.
     shap_importance = np.abs(shap_values).mean(axis=0)
     
-    # 按重要性排序，取前 top_n 个特征的索引
+    # Sort by importance and take the indices of the top_n features.
     sorted_idx = np.argsort(shap_importance)[::-1][:top_n]
-    # 筛选出对应的 SHAP 值和特征
+    # Filter out the corresponding SHAP values and features
     shap_values_top = shap_values[:, sorted_idx]
     X_top = X.iloc[:, sorted_idx] if isinstance(X, pd.DataFrame) else X[:, sorted_idx]
     feature_names_top = [feature_names[i] for i in sorted_idx]
     
     # colors = [
-    #         (0.1, 0.2, 0.5),   # 深蓝（冷色，负贡献）
-    #         (0.3, 0.4, 0.7),   # 中度蓝
-    #         (0.7, 0.3, 0.3),   # 中度红
-    #         (0.5, 0.1, 0.1)    # 深红（暖色，正贡献）
+    #         (0.1, 0.2, 0.5),   
+    #         (0.3, 0.4, 0.7),   
+    #         (0.7, 0.3, 0.3),   
+    #         (0.5, 0.1, 0.1)    
     #     ]
 
-    # # 创建自定义 colormap
     # custom_coolwarm = LinearSegmentedColormap.from_list(
     #     "custom_coolwarm", colors, N=256
     # )
     
-    # 绘制汇总图
+    # Create a summary chart
     shap.summary_plot(
         shap_values_top,
         X_top,
@@ -225,8 +220,6 @@ def shap_summary_top_features(shap_values, X, top_n=2, show=True, save=True):
         plt.savefig(r'experiment3_record\\exp1_image\\7_3_rf_similarity_abnormal_shap_summary.jpg', dpi=1000)
     
 if __name__ == '__main__':
-    # 对实验1中的全量指标+缺项GCS进行SHAP分析 ==> 对测试集进行分析 ==> 解释模型为什么这样预测
-    # 加载gcs训练集
     # df_train = pd.read_csv(r'data_base\\00_minus_db1\\full_assessment\\7-3\\train.csv')
     # model = pickle.load(open(r"model_pth\\exp_1\\00_minus_db1\\7-3\\seed_230\\rf_model.pkl", "rb"))
     # df_test = pd.read_csv(r'data_base\\00_minus_db1\\full_assessment\\7-3\\test.csv')
@@ -249,27 +242,23 @@ if __name__ == '__main__':
                       'Blood_pressure_high', 'Blood_pressure_low', 'Left_pupil_size', 'Right_pupil_size',
                       'consciousness', 'ChartTime']
     X_train = df_train.drop(columns=select_columns)
-    # 背景数据-解释数据：300-300，修改为背景数据-解释数据： 500-3000
-    X_train_sample = shap.sample(X_train, 10000)  # 采样500个样本作为背景数据
+    X_train_sample = shap.sample(X_train, 10000)  
     # X_test = df_test.iloc[:, -5:-1]
-    # 先不去掉consciousness
     X_test = df_test.drop(columns=[x for x in select_columns if x != 'consciousness'])
-    X_test_sample = shap.sample(X_test, 10000)  # 采样500个样本作为解释数据
+    X_test_sample = shap.sample(X_test, 10000) 
     y_test_samaple = X_test_sample['consciousness']
-    # X_test_sample去掉consciousness
     X_test_sample = X_test_sample.drop(columns=['consciousness'])
-    # 计算模型预测的类别
     y_pred = model.predict(X_test_sample)
-    # 统计真实标签和预测标签中不同类别的数量
+    # Count the number of different categories in the actual labels and predicted labels.
     true_counts = np.bincount(y_test_samaple)
     pred_counts = np.bincount(y_pred)
-    # 绘制预测值与真实值的对比图
+    # Plot a comparison chart of predicted values versus actual values
     # plot_awakening_radar(true_counts, pred_counts)
-    # 替换X_test_sample中的open_one's_eyes为Eyes
+    # Replace “open_one's_eyes” with “Eyes” in X_test_sample.
     X_test_sample = X_test_sample.rename(columns={'open_one\'s_eyes': 'Eyes'})
-    # 替换X_test_sample中的motion为Motor
+    # Replace “motion” with “Motor” in X_test_sample.
     X_test_sample = X_test_sample.rename(columns={'motion': 'Motor'})
-    # 替换X_test_sample中的language为Verbal
+    # Replace the language in X_test_sample with Verbal
     X_test_sample = X_test_sample.rename(columns={'language': 'Verbal'})
     # Random Forest
     explainer = shap.TreeExplainer(model, X_train_sample)
@@ -277,8 +266,8 @@ if __name__ == '__main__':
     # explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_test_sample)
     ###############################################################################
-    shap_values = np.array(shap_values)  # 转换为NumPy数组，形状为 (类别数, 样本数, 特征数)
-    # 根据特征选择shap值
+    shap_values = np.array(shap_values)  # Convert to a NumPy array with shape (number of classes, number of samples, number of features)
+    # Selecting SHAP values based on features
     shap_values = shap_values[:, :, :3]
     X_test_sample = X_test_sample.iloc[:, :3]
     plt.figure(figsize=(5, 4))
@@ -296,14 +285,14 @@ if __name__ == '__main__':
     # plt.show()
     plt.savefig(r'experiment3_record\\exp1_image\\7_3_rf_similarity_abnormal_class4_shap_summary.jpg', dpi=1000)
     exit()
-    # # 遍历y_pred, 根据y_pred保留每个特征在每个样本的SHAP值
+    # # Iterate through y_pred, retaining the SHAP value for each feature in each sample based on y_pred.
     # shap_values = shap_values[y_pred, np.arange(len(y_pred)), :]
     # feature_shap_importance = np.abs(shap_values).mean(axis=0)
     # print(feature_shap_importance)
-    # # 获取前3个最重要特征的索引
+    # # Obtain the indices of the top 3 most important features
     # top3_indices = np.argsort(feature_shap_importance)[-3:]
     # top3_features = X_test_sample.columns[top3_indices]
-    # # 获取前3个最重要特征的SHAP值
+    # # Obtain the SHAP values for the top 3 most important features
     # top3_shap_values = shap_values[:, top3_indices]
     # ###############################################################################
     # plt.figure(figsize=(5, 4))
@@ -323,94 +312,80 @@ if __name__ == '__main__':
     # plt.show()
     # exit()
     
-    # # 模型1: 7-3-danet
+    # # Model 1: 7-3-danet
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\DANet.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model_predict_function, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_danet_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # # 模型2: 7-3-tabnet
+    # # Model 2: 7-3-tabnet
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\TabNet.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model_predict_function, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_tabnet_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # # 模型3: 7-3-fttransformer
+    # # Model 3: 7-3-fttransformer
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\FTTransformer.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model_predict_function, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_fttransformer_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # # 模型4： 7-3-tabtransformer
+    # # Model 4： 7-3-tabtransformer
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\TabTransformer.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model_predict_function, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_tabtransformer_shap_summary.jpg', dpi=1000)
     # plt.close()
     # exit()
     
-    # # 模型5： 7-3-lightgbm
+    # # Model 5： 7-3-lightgbm
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\lgb.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # # explainer = shap.PermutationExplainer(model.predict, X_train_sample)
     # explainer = shap.TreeExplainer(model, X_train_sample)
     # shap_values = explainer.shap_values(X_test_sample)
-    # shap_values = np.array(shap_values)  # 转换为NumPy数组，形状为 (类别数, 样本数, 特征数)
-    # # 取 “每个样本最终预测类别” 对应的 SHAP 值（代表特征对 “最终预测结果” 的贡献）
+    # shap_values = np.array(shap_values)  # Convert to a NumPy array with shape (number of classes, number of samples, number of features)
+    # # Obtain the SHAP value corresponding to the “final predicted category for each sample” (representing the feature's contribution to the “final prediction result”).
     # y_pred = model.predict(X_test_sample)
-    # # 原始shap_values维度是 (类别数, 样本数, 特征数)，需调整索引顺序为 (样本数, 类别数, 特征数)
-    # shap_values_transposed = shap_values.transpose(1, 0, 2)  # 形状变为 (100, 5, 10)
-    # # 按预测类别索引提取SHAP值，最终形状 (100, 10)
+    # # The original shap_values dimensions are (number of classes, number of samples, number of features), requiring adjustment to the index order: (number of samples, number of classes, number of features).
+    # shap_values_transposed = shap_values.transpose(1, 0, 2) 
+    # # Indexing SHAP values by prediction category
     # shap_values = shap_values_transposed[np.arange(len(y_pred)), y_pred, :]
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_LightGBM_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # # 模型6： 7-3-xgboost
+    # # Model 6： 7-3-xgboost
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\xgboost.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # # explainer = shap.PermutationExplainer(model.predict, X_train_sample)
     # explainer = shap.TreeExplainer(model, X_train_sample)
     # shap_values = explainer.shap_values(X_test_sample)
-    # shap_values = np.array(shap_values)  # 转换为NumPy数组，形状为 (类别数, 样本数, 特征数)
-    # # 取 “每个样本最终预测类别” 对应的 SHAP 值（代表特征对 “最终预测结果” 的贡献）
+    # shap_values = np.array(shap_values)  # Convert to a NumPy array with shape (number of classes, number of samples, number of features)
+    # # Take the SHAP value corresponding to the “final predicted category for each sample” (representing the feature's contribution to the “final prediction result”).
     # y_pred = model.predict(X_test_sample)
-    # # 原始shap_values维度是 (类别数, 样本数, 特征数)，需调整索引顺序为 (样本数, 类别数, 特征数)
-    # shap_values_transposed = shap_values.transpose(1, 0, 2)  # 形状变为 (100, 5, 10)
-    # # 按预测类别索引提取SHAP值，最终形状 (100, 10)
+    # # The original shap_values dimensions are (number of classes, number of samples, number of features), requiring adjustment to the index order: (number of samples, number of classes, number of features).
+    # shap_values_transposed = shap_values.transpose(1, 0, 2)
+    # # Indexing SHAP values by prediction category
     # shap_values = shap_values_transposed[np.arange(len(y_pred)), y_pred, :]
-    # # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_XGBoost_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # 模型7： 7-3-randomforest
+    # Model 7： 7-3-randomforest
     model = pickle.load(open(r"model_pth\\exp_1\\03_cos_similarity_db\\7-3\\seed_230\\rf_model.pkl", "rb"))
-    # # 绘制特征重要性柱状图
     # importances = model.feature_importances_
-    # # 4. 按重要性排序
     # indices = np.argsort(importances)[::-1]
     # sorted_features = [X_train.columns[i] for i in indices]
     # sorted_importances = [importances[i] for i in indices]
@@ -418,64 +393,54 @@ if __name__ == '__main__':
     # sorted_importances = sorted_importances[:3]
     # sorted_features.reverse()
     # sorted_importances.reverse()
-    # # 6. 顶刊配色（Nature 常用配色）
-    # colors = ['#1f2937', '#374151', '#4b5563']  # 深色系
-    # # 7. 绘制水平条形图
+    # colors = ['#1f2937', '#374151', '#4b5563']
     # plt.figure(figsize=(8, 4))
     # bars = plt.barh(range(len(sorted_features)), sorted_importances, color=colors)
 
-    # # 添加数值标签
     # for bar in bars:
     #     width = bar.get_width()
     #     plt.text(width + 0.005, bar.get_y() + bar.get_height()/2,
     #             f'{width:.4f}', ha='left', va='center')
     # plt.barh(range(len(sorted_features)), sorted_importances, color=colors)
-    # # 设置 x 轴范围
-    # plt.xlim(0, max(sorted_importances) * 1.2)  # 留出空间给数值标签
+    # plt.xlim(0, max(sorted_importances) * 1.2)  # Leave space for numerical labels
     # plt.yticks(range(len(sorted_features)), sorted_features)
     # plt.xlabel("Feature Importance")
     # plt.ylabel("Feature")
     # # plt.tight_layout()
     # # plt.show()
-    # # 保存为pdf
     # # plt.savefig(r'experiment3_record\\exp1_image\\7-3_RF_origin_full_summary.pdf', dpi=1000)
     # # plt.close()
     # exit()
-    # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
+    
     # explainer = shap.PermutationExplainer(model.predict, X_train_sample)
     explainer = shap.TreeExplainer(model, X_train_sample)
     shap_values = explainer.shap_values(X_test_sample)
-    shap_values = np.array(shap_values)  # 转换为NumPy数组，形状为 (类别数, 样本数, 特征数)
-    # 取 “每个样本最终预测类别” 对应的 SHAP 值（代表特征对 “最终预测结果” 的贡献）
+    shap_values = np.array(shap_values)  # Convert to a NumPy array with shape (number of classes, number of samples, number of features)
+    # Take the SHAP value corresponding to the “final predicted category for each sample” (representing the feature's contribution to the “final prediction result”).
     y_pred = model.predict(X_test_sample)
-    # 原始shap_values维度是 (类别数, 样本数, 特征数)，需调整索引顺序为 (样本数, 类别数, 特征数)
-    shap_values_transposed = shap_values.transpose(1, 0, 2)  # 形状变为 (100, 5, 10)
-    # 按预测类别索引提取SHAP值，最终形状 (100, 10)
+    # The original shap_values dimensions are (number of classes, number of samples, number of features), requiring adjustment to the index order: (number of samples, number of classes, number of features).
+    shap_values_transposed = shap_values.transpose(1, 0, 2)
+    # Indexing SHAP values by prediction category
     shap_values = shap_values_transposed[np.arange(len(y_pred)), y_pred, :]
-    # # 使用测试集作为输入及特征，测试集为要解释的数据
     shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", max_display=3, show=False)
     plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_RF_shap_summary.jpg', dpi=1000)
     # plt.close()
     plt.show()
     
-    # # 模型8： 7-3-CatBoost
+    # # Model 8： 7-3-CatBoost
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\catboost.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model.predict, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_catboost_shap_summary.jpg', dpi=1000)
     # plt.close()
     
-    # # 模型9： 7-3-MLP
+    # # Model 9： 7-3-MLP
     # model = pickle.load(open(r"model_pth\\exp1\\all_metrics\\7-3\\mlp.pkl", "rb"))
-    # # # 这个地方使用训练集子集作为背景数据, 第二项为基准数据集|背景数据集
     # explainer = shap.PermutationExplainer(model.predict, X_train_sample)
     # shap_values = explainer(X_test_sample)
-    # # 使用测试集作为输入及特征，测试集为要解释的数据
     # shap.summary_plot(shap_values, X_test_sample, cmap="coolwarm", show=False)
     # plt.tight_layout()
     # plt.savefig(r'exp_img\\exp1_all_metrics_7_3\\7-3_mlp_shap_summary.jpg', dpi=1000)
