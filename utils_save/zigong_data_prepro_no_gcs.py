@@ -50,62 +50,62 @@ def calc_language_score(method):
 
 
 if __name__ == '__main__':
-    # 读取数据
+    # Read data
     df = pd.read_csv('zigong_data/dtNursingChart.csv', low_memory=False)
-    # 去掉其中ChartTime为空的行
+    # Remove rows where ChartTime is null
     df = df.dropna(subset=['ChartTime'])
     df_status = pd.read_csv('zigong_data/dtICD.csv', low_memory=False)
-    # 查找df_status中1种INP_NO是否仅对应1种Status_Discharge
+    # Determine whether INP_NO in df_status corresponds uniquely to Status_Discharge.
     # inp_no_status_counts = df_status.groupby('INP_NO')['Status_Discharge'].nunique()
     # inp_no_with_multiple_status = inp_no_status_counts[inp_no_status_counts > 1]
-    # 去掉Status_Discharge为空的行
+    # Remove rows where Status_Discharge is null
     df_status = df_status.dropna(subset=['Status_Discharge'])
-    # 获取INP_NO与Status_Discharge两列
+    # Retrieve the INP_NO and Status_Discharge columns
     df_status = df_status[['INP_NO', 'Status_Discharge']]
-    # 按照INP_NO分组，如果Status_Discharge包含Dead，则删掉该组INP_NO对应的全部记录
+    # Group by INP_NO. If Status_Discharge contains Dead, delete all records corresponding to that INP_NO within the group.
     df_status = df_status[~df_status['INP_NO'].isin(df_status[df_status['Status_Discharge'].str.contains('Dead', case=False, na=False)]['INP_NO'])]
-    # 将df_status中的INP_NO去重
+    # Remove duplicates of INP_NO in df_status
     inp_no_alive = df_status['INP_NO'].unique()
-    # 结果保存为一个列表
+    # The results are saved as a list.
     inp_no_alive = list(inp_no_alive)
-    # 统计下Status_Discharge中不同取值的数量
-    # 统计所有列的缺失值
+    # Count the number of different values in Status_Discharge
+    # Count the number of missing values in all columns
     # missing_rates = df.isna().mean()
     # for column, missing_rate in missing_rates.items(): 
     #     print(f'Column: {column}, Missing Rate: {missing_rate:.2%}')
-    # 选择需要的列
+    # Select the required columns
     selected_columns = ['INP_NO', 'heart_rate', 'breathing', 'Blood_oxygen_saturation',
                         'Blood_pressure_high', 'Blood_pressure_low', 'Left_pupil_size', 
                         'Right_pupil_size', 'open_one\'s_eyes', 'motion', 'language', 
                         'consciousness', 'ChartTime']
     df_selected = df[selected_columns]
-    # 判断df_selected中的INP_NO是否存在于inp_no_alive中，存在则保留，否则删除
+    # Determine whether the INP_NO in df_selected exists in inp_no_alive. If it exists, retain it; otherwise, delete it.
     df_selected = df_selected[df_selected['INP_NO'].isin(inp_no_alive)]
-    # df_selected中重复行仅保留1条记录
+    # Only one duplicate row is retained in `df_selected`.
     df_selected = df_selected.drop_duplicates(keep='first')
-    # 统计缺失率
+    # Statistical Missing Rate
     missing_rates = df_selected.isna().mean()
     for column, missing_rate in missing_rates.items():
         print(f'Column: {column}, Missing Rate: {missing_rate:.2%}')
-    # 去掉包含缺失值的行
+    # Remove rows containing missing values
     df_selected = df_selected.dropna()
     for state, count in df_selected['language'].value_counts(sort=True, ascending=True).items():
         print(f'  State: {state}, Count: {count}')
-    # 添加GCS评分
-    # 将open_ones_eyes列保留箭头前的字符并转为数值型，不能转换的用nan表示
+    # Add GCS score
+    # Convert the characters before the arrow in the open_one‘s_eyes column to numeric values, replacing any unconvertible characters with nan.
     df_selected['open_one\'s_eyes'] = df_selected['open_one\'s_eyes'].apply(calc_eye_score)
-    # 将motion列保留箭头前的字符并转为数值型，不能转换的用nan表示
+    # Retain the characters preceding the arrow in the motion column and convert them to numeric values. Use nan for values that cannot be converted.
     df_selected['motion'] = df_selected['motion'].apply(calc_motion_score)
-    # 将language列保留箭头前的字符并转为数值型，不能转换的用nan表示
+    # Retain characters before the arrow in the language column and convert them to numeric values. Use nan for values that cannot be converted.
     df_selected['language'] = df_selected['language'].apply(calc_language_score)
-    # 去掉包含缺失值的行
+    # Remove rows containing missing values
     df_cleaned = df_selected.dropna()
     print(f'Original shape: {df_selected.shape}, Cleaned shape: {df_cleaned.shape}')
-    # 统计缺失率
+    # Calculate the missing rate
     missing_rates = df_cleaned.isna().mean()
     for column, missing_rate in missing_rates.items():
         print(f'Column: {column}, Missing Rate: {missing_rate:.2%}')
-    # 去掉非数值型的行
+    # Remove non-numeric rows
     df_cleaned = df_cleaned[pd.to_numeric(df_cleaned['Left_pupil_size'], errors='coerce').notnull()]
     df_cleaned = df_cleaned[pd.to_numeric(df_cleaned['Right_pupil_size'], errors='coerce').notnull()]
     df_cleaned['Left_pupil_size'] = df_cleaned['Left_pupil_size'].astype(float)
@@ -168,13 +168,5 @@ if __name__ == '__main__':
     print('Consciousness state counts:')
     for state, count in consciousness_counts.items():
         print(f'  State: {state}, Count: {count}')
-    exit()
-    """
-    State: 2, Count: 204443 ==>浅昏迷
-    State: 1, Count: 187110 ==>嗜睡+昏睡
-    State: 3, Count: 92298  ==>中昏迷
-    State: 0, Count: 33331  ==>清醒
-    State: 4, Count: 21327  ==>深昏迷
-    """
     # Save the final processed data
     df_filtered.to_csv('zigong_data/20251227_final_processed_data.csv', index=False)
