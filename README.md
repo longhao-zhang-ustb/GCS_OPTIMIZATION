@@ -6,7 +6,7 @@ This is a code implementation that utilizes machine learning and data imputation
 
 ## Dataset Information
 
-This research utilizes a restricted-access dataset (Database name: Critical care database comprising patients with infection at Zigong Fourth People's Hospital), and access to the resources is granted only after completing relevant training and signing the data usage agreement. We have completed the Collaborative Institutional Training Initiative (Record ID: 64076481) training and signed the data usage agreement, thereby exempting us from secondary review by the institutional ethics review board. The address for requesting raw data is https://physionet.org/content/icu-infection-zigong-fourth/1.1/ (accessed January 17, 2026).
+This research utilizes a restricted-access dataset (Critical care database comprising patients with infection at Zigong Fourth People's Hospital), and access to the resources is granted only after completing relevant training and signing the data usage agreement. We have completed the Collaborative Institutional Training Initiative (Record ID: 64076481) training and signed the data usage agreement, thereby exempting us from secondary review by the institutional ethics review board. The address for requesting raw data is https://physionet.org/content/icu-infection-zigong-fourth/1.1/ (accessed January 17, 2026).
 
 ## Code Information
 
@@ -28,7 +28,7 @@ Step1: Create a virtual Python environment using Anaconda.<br>Step2: Run `pip in
 
 ## Requirements
 
-Please refer to the requirements.txt. The specific installation method is as follows: pip install -r requirements.txt.
+Please refer to the requirements.txt. The specific installation method is as follows: `pip install -r requirements.txt`.
 
 ## Methodology
 
@@ -42,4 +42,4 @@ Please refer to the manuscript.
 
 ## License & Contribution Guidelines
 
-**License (for files):** [PhysioNet Credentialed Health Data License 1.5.0](https://physionet.org/content/icu-infection-zigong-fourth/view-license/1.1/)<br>**Data Use Agreement:**[PhysioNet Credentialed Health Data Use Agreement 1.5.0](https://physionet.org/content/icu-infection-zigong-fourth/view-dua/1.1/)<br>**Required training:**[CITI Data or Specimens Only Research](https://physionet.org/content/icu-infection-zigong-fourth/view-required-training/1.1/#1)<br>
+**License (for files):** [PhysioNet Credentialed Health Data License 1.5.0](https://physionet.org/content/icu-infection-zigong-fourth/view-license/1.1/)<br>**Data Use Agreement:** [PhysioNet Credentialed Health Data Use Agreement 1.5.0](https://physionet.org/content/icu-infection-zigong-fourth/view-dua/1.1/)<br>**Required training:** [CITI Data or Specimens Only Research](https://physionet.org/content/icu-infection-zigong-fourth/view-required-training/1.1/#1)<br>
