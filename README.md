@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a code implementation that utilizes machine learning and data imputation techniques to improve the detection of Glasgow Coma Scale (GCS) assessment failures. We focused our research on addressing issues such as assessment failures in patients with artificial airways and the simplification of GCS scoring. Our study employed a restricted-access dataset, which can be downloaded upon obtaining data access permissions. Our research confirms the effectiveness of machine learning and data imputation in enhancing the detection of GCS assessment failures. If you have any other questions, feel free to contact me.
+The code implementation for optimizing the Glasgow Coma Scale (GCS) using machine learning and data imputation techniques. We focused our research on addressing issues such as assessment failures in patients with artificial airways and simplifying GCS. Our research confirms the effectiveness of machine learning and data imputation in enhancing the detection quality of GCS. If you have any questions, feel free to contact us.
 
 ## Dataset Information
 
