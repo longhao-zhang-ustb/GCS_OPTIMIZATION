@@ -1,4 +1,4 @@
-# Optimization Study on Glasgow Defect Detection
+# Optimization Study on Glasgow Coma Scale Defect Detection
 
 ## Description
 
